@@ -39,11 +39,23 @@ export type StrummingResult = {
   confidenceNote: string;
 };
 
-export type ChordShape = {
+export type ChordVoicing = {
   chord: string;
+  label: string;
   frets: Array<number | 'x'>;
   fingers: Array<number | null>;
+  difficulty: 'easy' | 'medium' | 'hard';
+  neckPosition: string;
+  styleTags?: string[];
+  recommendationReason?: string;
   baseFret?: number;
+};
+
+export type ChordShape = {
+  chord: string;
+  voicings: ChordVoicing[];
+  recommendedVoicingIndex: number;
+  recommendationReason: string;
 };
 
 export type TheoryResult = {
