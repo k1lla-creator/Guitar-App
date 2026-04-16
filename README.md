@@ -143,6 +143,57 @@ Includes:
 - Chord library is intentionally compact for MVP; can be expanded with voicing packs
 - No persistence/user history yet
 
+
+## Chord Voicings (New MVP Upgrade)
+
+The **Chord Shapes** tab now supports multiple voicings per chord instead of a single static fingering.
+
+### How voicings work
+- Every chord contains a `voicings[]` array.
+- Each voicing includes:
+  - chord name
+  - label (e.g., "Open G major", "E-shape barre")
+  - fret positions
+  - finger positions
+  - difficulty (`easy`, `medium`, `hard`)
+  - neck position
+  - optional style tags
+  - optional recommendation reason
+- The UI shows the recommended voicing by default and allows cycling through alternatives with **Prev/Next**.
+
+
+### Chord knowledge expansion pipeline
+The chord subsystem is now split into clear stages:
+
+1. **Chord detection** (`lib/chords/detection.ts`) parses raw chord symbols into root + quality (supports slash chords).
+2. **Chord knowledge lookup** (`lib/chords/knowledge.ts`) checks:
+   - local built-in voicing library first
+   - local cache (`.cache/chord-voicings.json`) second
+   - internet fallback (GitHub `chords-db` dataset) only when needed
+3. **Chord rendering** (`components/ChordDiagram.tsx`) uses normalized voicing data and remains UI-focused.
+
+Internet lookup results are normalized, validated, filtered, and then cached locally for future requests.
+
+### Recommendation system (current MVP)
+Voicing recommendations are heuristic and song-aware. They prioritize:
+1. beginner friendliness (especially when `simplifyForBeginners=true`)
+2. smoother transitions relative to progression context
+3. likely song style hints (derived from mood + section patterns)
+4. reasonable hand position on the fretboard
+
+If **Simplify for Beginners** is enabled, the recommender biases toward easier/open voicings and penalizes barre-heavy options.
+
+### Included mock voicing coverage
+The bundled voicing library now includes multiple options for common chords:
+- `G`, `C`, `D`, `Em`, `Am`, `A`, `E`, `F`
+
+Sample songs like **Let It Be** (C–G–Am–F) now showcase visibly different recommendations across open vs barre-style options.
+
+### Current limitations
+- Recommendation logic is intentionally heuristic (not yet model-ranked by audio/style analysis).
+- Transition smoothing is local and progression-based; it does not yet optimize globally across an entire arrangement.
+- The voicing library is curated for MVP and does not yet cover full chord-extension families.
+
 ## Where to Integrate Live Tab Providers Next
 
 Add adapters implementing `SongProvider` in:
@@ -160,4 +211,4 @@ Recommended next step:
 2. Introduce explicit tool-calling and agent orchestration runtime.
 3. Persist analyses and user practice plans.
 4. Add section-level playback/metronome and practice loops.
-5. Expand chord-shape engine for alternate voicings + capo-aware transposition.
+5. Add capo-aware transposition and voicing packs for genre-specific arrangements.
