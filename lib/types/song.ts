@@ -9,13 +9,19 @@ export type SourceCandidate = {
   url: string;
   title: string;
   artist: string;
+  songTitle?: string;
+  versionLabel?: string;
+  confidenceScore?: number;
+  matchReason?: string;
   artistMatchConfidence: number;
   extractedText?: string;
 };
 
 export type SongSeekerResult = {
   candidates: SourceCandidate[];
-  chosen: SourceCandidate;
+  chosen?: SourceCandidate;
+  requiresConfirmation: boolean;
+  ambiguityReason?: string;
   notes?: string;
 };
 
@@ -39,11 +45,30 @@ export type StrummingResult = {
   confidenceNote: string;
 };
 
-export type ChordShape = {
+export type VoicingSource = {
+  provider: string;
+  url?: string;
+  fetchedAt?: string;
+};
+
+export type ChordVoicing = {
   chord: string;
+  label: string;
   frets: Array<number | 'x'>;
   fingers: Array<number | null>;
+  difficulty: 'easy' | 'medium' | 'hard';
+  neckPosition: string;
+  styleTags?: string[];
+  recommendationReason?: string;
   baseFret?: number;
+  source: VoicingSource;
+};
+
+export type ChordShape = {
+  chord: string;
+  voicings: ChordVoicing[];
+  recommendedVoicingIndex: number;
+  recommendationReason: string;
 };
 
 export type TheoryResult = {
