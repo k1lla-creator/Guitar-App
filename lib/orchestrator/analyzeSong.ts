@@ -3,7 +3,7 @@ import { SongSeekerAgent } from '@/lib/agents/songSeeker';
 import { StrumTranslatorAgent } from '@/lib/agents/strumTranslator';
 import { TabTranslatorAgent } from '@/lib/agents/tabTranslator';
 import { TheoryGuideAgent } from '@/lib/agents/theoryGuide';
-import type { AnalysisResult } from '@/lib/types/song';
+import type { AnalysisResult, SourceCandidate } from '@/lib/types/song';
 import { simplifyChord, simplifyProgression } from '@/lib/utils/chords';
 
 function logAgentStage(agentName: string, stage: 'start' | 'success' | 'error', details: string): void {
@@ -42,6 +42,7 @@ export async function analyzeSong(input: {
   songTitle: string;
   artistName: string;
   simplifyForBeginners: boolean;
+  confirmedCandidate?: SourceCandidate;
 }): Promise<AnalysisResult> {
   const warnings: string[] = [];
 
@@ -101,7 +102,7 @@ export async function analyzeSong(input: {
   return {
     songTitle: input.songTitle,
     artistName: input.artistName,
-    source: sourceResults.chosen,
+    source: selectedSource,
     tab: normalizedTab,
     strumming,
     chordShapes,

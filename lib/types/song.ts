@@ -9,13 +9,19 @@ export type SourceCandidate = {
   url: string;
   title: string;
   artist: string;
+  songTitle?: string;
+  versionLabel?: string;
+  confidenceScore?: number;
+  matchReason?: string;
   artistMatchConfidence: number;
   extractedText?: string;
 };
 
 export type SongSeekerResult = {
   candidates: SourceCandidate[];
-  chosen: SourceCandidate;
+  chosen?: SourceCandidate;
+  requiresConfirmation: boolean;
+  ambiguityReason?: string;
   notes?: string;
 };
 

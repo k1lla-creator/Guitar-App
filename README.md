@@ -53,7 +53,9 @@ tests/
 
 ### 1) SongSeeker
 - Input: song title + artist
-- Output: ranked source candidates (name, URL, title, confidence, extracted text)
+- Output: ranked source candidates (song title, artist, source, optional version label, confidence, match reason, extracted text)
+- Matching behavior: normalization + typo-tolerant fuzzy scoring (punctuation/accent/case-insensitive)
+- Ambiguity handling: marks when explicit user confirmation is required before analysis continues
 - MVP implementation: pluggable provider interface with a mock provider
 - Extension point: add live source adapters where `SongProvider` is defined
 
@@ -82,7 +84,7 @@ tests/
 
 The backend pipeline is coordinated in:
 
-`SongSeeker -> TabTranslator -> StrumTranslator -> ChordVisualizer -> TheoryGuide`
+`SongSeeker (candidate ranking + optional confirmation) -> TabTranslator -> StrumTranslator -> ChordVisualizer -> TheoryGuide`
 
 The orchestrator handles:
 - missing source text
@@ -144,6 +146,22 @@ Includes:
 - No persistence/user history yet
 
 
+
+## Candidate Selection Flow (New)
+
+After entering a song and artist, the results page now follows a two-step flow:
+
+1. **Candidate search**
+   - `SongSeeker` returns ranked candidate matches using typo-tolerant fuzzy logic.
+   - Candidate scores are computed after normalization (punctuation, accents, capitalization).
+2. **User confirmation when needed**
+   - If confidence is low or multiple strong matches are close, the UI requires explicit user selection before parsing tabs.
+   - If confidence is very high, the top candidate is preselected, while alternatives remain clickable.
+3. **Analysis**
+   - Tab parsing and downstream agents run only after a candidate has been confirmed (auto or manual).
+
+This prevents overly aggressive auto-selection and improves reliability for misspelled inputs.
+
 ## Chord Voicings (New MVP Upgrade)
 
 The **Chord Shapes** tab now supports multiple voicings per chord instead of a single static fingering.
@@ -160,6 +178,19 @@ The **Chord Shapes** tab now supports multiple voicings per chord instead of a s
   - optional style tags
   - optional recommendation reason
 - The UI shows the recommended voicing by default and allows cycling through alternatives with **Prev/Next**.
+
+
+### Chord knowledge expansion pipeline
+The chord subsystem is now split into clear stages:
+
+1. **Chord detection** (`lib/chords/detection.ts`) parses raw chord symbols into root + quality (supports slash chords).
+2. **Chord knowledge lookup** (`lib/chords/knowledge.ts`) checks:
+   - local built-in voicing library first
+   - local cache (`.cache/chord-voicings.json`) second
+   - internet fallback (GitHub `chords-db` dataset) only when needed
+3. **Chord rendering** (`components/ChordDiagram.tsx`) uses normalized voicing data and remains UI-focused.
+
+Internet lookup results are normalized, validated, filtered, and then cached locally for future requests.
 
 ### Recommendation system (current MVP)
 Voicing recommendations are heuristic and song-aware. They prioritize:
