@@ -66,6 +66,13 @@ export type ChordShape = {
   recommendationReason: string;
 };
 
+export type ChordShape = {
+  chord: string;
+  voicings: ChordVoicing[];
+  recommendedVoicingIndex: number;
+  recommendationReason: string;
+};
+
 export type TheoryResult = {
   likelyKey: string;
   relativeKey?: string;

@@ -161,19 +161,6 @@ The **Chord Shapes** tab now supports multiple voicings per chord instead of a s
   - optional recommendation reason
 - The UI shows the recommended voicing by default and allows cycling through alternatives with **Prev/Next**.
 
-
-### Chord knowledge expansion pipeline
-The chord subsystem is now split into clear stages:
-
-1. **Chord detection** (`lib/chords/detection.ts`) parses raw chord symbols into root + quality (supports slash chords).
-2. **Chord knowledge lookup** (`lib/chords/knowledge.ts`) checks:
-   - local built-in voicing library first
-   - local cache (`.cache/chord-voicings.json`) second
-   - internet fallback (GitHub `chords-db` dataset) only when needed
-3. **Chord rendering** (`components/ChordDiagram.tsx`) uses normalized voicing data and remains UI-focused.
-
-Internet lookup results are normalized, validated, filtered, and then cached locally for future requests.
-
 ### Recommendation system (current MVP)
 Voicing recommendations are heuristic and song-aware. They prioritize:
 1. beginner friendliness (especially when `simplifyForBeginners=true`)
