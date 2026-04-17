@@ -1,4 +1,5 @@
 import type { ChordShape, ChordVoicing, SectionProgression } from '@/lib/types/song';
+import { getChordVoicings } from '@/lib/chords/knowledge';
 
 type RecommendationContext = {
   sections: SectionProgression[];
@@ -263,6 +264,8 @@ function scoreVoicing(
     if (voicing.difficulty === 'hard') score -= 20;
 
     if (voicing.neckPosition.toLowerCase().includes('open')) score += 14;
+  } else if (voicing.difficulty === 'medium') {
+    score += 6;
   } else {
     if (voicing.difficulty === 'medium') score += 6;
   }
@@ -286,6 +289,7 @@ function buildRecommendationReason(
   const notes: string[] = [];
 
   if (simplifyForBeginners && voicing.difficulty === 'easy') {
+    notes.push('uses a beginner-friendly fingering');
     notes.push('beginner-friendly fingering with low hand strain');
   }
 
@@ -300,6 +304,11 @@ function buildRecommendationReason(
   }
 
   if (voicing.neckPosition.toLowerCase().includes('open')) {
+    notes.push('stays in open position for easier movement');
+  }
+
+  if (voicing.source.provider.toLowerCase().includes('cached')) {
+    notes.push('comes from cached chord knowledge for fast loading');
     notes.push('stays in open position for quick chord changes');
   } else {
     notes.push(`keeps your hand around the ${voicing.neckPosition.toLowerCase()}`);
@@ -310,6 +319,7 @@ function buildRecommendationReason(
 }
 
 export class ChordVisualizerAgent {
+  async run(chords: string[], context: RecommendationContext): Promise<ChordShape[]> {
   run(chords: string[], context: RecommendationContext): ChordShape[] {
     const styleHints = detectStyleHints(context.songStyleHint, context.sections);
     const progression = context.sections.flatMap((section) => section.progression);
@@ -319,6 +329,41 @@ export class ChordVisualizerAgent {
       if (!firstSeenOrder.has(chord)) firstSeenOrder.set(chord, index);
     });
 
+    return Promise.all(
+      chords.map(async (chord) => {
+        const voicings = await getChordVoicings(chord);
+        const progressionSpot = firstSeenOrder.get(chord) ?? 0;
+        const previousChord = progressionSpot > 0 ? progression[progressionSpot - 1] : undefined;
+        const previousVoicing = previousChord ? (await getChordVoicings(previousChord))[0] : undefined;
+        const transitionTarget = previousVoicing ? approximateFretCenter(previousVoicing) : 2;
+
+        let bestIndex = 0;
+        let bestScore = Number.NEGATIVE_INFINITY;
+        voicings.forEach((voicing, index) => {
+          const score = scoreVoicing(voicing, context.simplifyForBeginners, styleHints, transitionTarget);
+          if (score > bestScore) {
+            bestScore = score;
+            bestIndex = index;
+          }
+        });
+
+        const recommendedVoicing = voicings[bestIndex];
+        const recommendationReason =
+          recommendedVoicing.recommendationReason ??
+          buildRecommendationReason(recommendedVoicing, context.simplifyForBeginners, styleHints, transitionTarget);
+
+        const enrichedVoicings = voicings.map((voicing, index) =>
+          index === bestIndex ? { ...voicing, recommendationReason } : voicing
+        );
+
+        return {
+          chord,
+          voicings: enrichedVoicings,
+          recommendedVoicingIndex: bestIndex,
+          recommendationReason
+        };
+      })
+    );
     return chords.map((chord) => {
       const voicings = chordVoicingLibrary[chord] ?? [
         {

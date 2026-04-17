@@ -39,6 +39,13 @@ export type StrummingResult = {
   confidenceNote: string;
 };
 
+
+export type VoicingSource = {
+  provider: string;
+  url?: string;
+  fetchedAt?: string;
+};
+
 export type ChordVoicing = {
   chord: string;
   label: string;
@@ -49,6 +56,14 @@ export type ChordVoicing = {
   styleTags?: string[];
   recommendationReason?: string;
   baseFret?: number;
+  source: VoicingSource;
+};
+
+export type ChordShape = {
+  chord: string;
+  voicings: ChordVoicing[];
+  recommendedVoicingIndex: number;
+  recommendationReason: string;
 };
 
 export type ChordShape = {
