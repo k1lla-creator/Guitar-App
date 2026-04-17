@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LoadingState } from '@/components/LoadingState';
 import { ResultsDashboard } from '@/components/ResultsDashboard';
@@ -52,6 +53,7 @@ export function ResultsClient({ songTitle, artistName }: { songTitle: string; ar
 
     void loadCandidates();
   }, [songTitle, artistName]);
+  const router = useRouter();
 
   useEffect(() => {
     if (!canAutoAnalyze || !candidateResult?.chosen) return;
@@ -182,6 +184,23 @@ export function ResultsClient({ songTitle, artistName }: { songTitle: string; ar
 
       {isAnalyzing && <LoadingState />}
       {!isAnalyzing && data && <ResultsDashboard initial={data} />}
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-start">
+        <button
+          type="button"
+          onClick={() => router.push('/')}
+          className="inline-flex items-center gap-2 rounded-lg border border-panelBorder/80 bg-black/20 px-3 py-2 text-sm text-muted transition hover:border-accent/40 hover:text-white"
+          aria-label="Back to home search"
+        >
+          <span aria-hidden="true">←</span>
+          <span>Home</span>
+        </button>
+      </div>
+
+      {error && <div className="panel p-6 text-red-300">{error}</div>}
+      {!error && !data && <LoadingState />}
+      {data && <ResultsDashboard initial={data} />}
     </div>
   );
 }

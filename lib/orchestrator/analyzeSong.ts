@@ -52,31 +52,18 @@ export async function analyzeSong(input: {
   const chordVisualizer = new ChordVisualizerAgent();
   const theoryGuide = new TheoryGuideAgent();
 
-  const sourceResults = input.confirmedCandidate
-    ? {
-        candidates: [input.confirmedCandidate],
-        chosen: input.confirmedCandidate,
-        requiresConfirmation: false,
-        notes: 'Using user-confirmed candidate selection.'
-      }
-    : await runAgentWithLogging(
-        'SongSeekerAgent',
-        () => songSeeker.run(input.songTitle, input.artistName),
-        (result) => `selected source="${result.chosen?.sourceName ?? 'none'}", candidates=${result.candidates.length}`
-      );
-
-  const selectedSource = sourceResults.chosen ?? sourceResults.candidates[0];
-  if (!selectedSource) {
-    throw new Error('No source candidates were available for analysis.');
-  }
-
-  if (!selectedSource.extractedText) {
+  const sourceResults = await runAgentWithLogging(
+    'SongSeekerAgent',
+    () => songSeeker.run(input.songTitle, input.artistName),
+    (result) => `selected source="${result.chosen.sourceName}", candidates=${result.candidates.length}`
+  );
+  if (!sourceResults.chosen.extractedText) {
     warnings.push('Source extraction text was unavailable; used conservative parser defaults.');
   }
 
   const tab = await runAgentWithLogging(
     'TabTranslatorAgent',
-    () => tabTranslator.run(selectedSource.extractedText ?? 'G D Em C'),
+    () => tabTranslator.run(sourceResults.chosen.extractedText ?? 'G D Em C'),
     (result) => `uniqueChords=${result.uniqueChords.length}, sections=${result.sections.length}, parserConfidence=${result.parserConfidence}`
   );
   const normalizedTab = input.simplifyForBeginners
